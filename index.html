@@ -117,30 +117,32 @@ title: Home
 <section class="home-section" id="physical-principle">
   <h2>Physics-informed principle</h2>
 
-  <!-- SOURCE: Introduction / Abstract. First innovation with Fig. 1a–b. -->
+  <!-- SOURCE: manuscript Introduction contribution paragraph. -->
   <ul class="innovations">
-    <li>Explicit modeling of heterogeneous noise from different optoelectronic sources, including mixed Poisson-Gaussian noise (MPGN), fixed-pattern noise (FPN), and row noise (RN);</li>
+    <li>DeepPhD is grounded in a comprehensive physical dissection of image degradation, directly linking noise-formation mechanisms to computational noise removal.</li>
   </ul>
 
-  <!-- SOURCE: Fig. 1a–b. Physical noise formation and decoupling. -->
+  <!-- SOURCE: Fig. 1a–b. -->
   <img src="{{ site.baseurl }}/images/deepphd_fig1_ab.png" class="section-figure" alt="Physical imaging process and noise composition">
 
   <details class="caption-more">
     <summary>More information</summary>
-    <p>Fluorescence photons undergo photoelectric conversion, amplification, readout, and digitization. The overall noise model is an additive combination of MPGN, FPN, and RN.</p>
+    <!-- SOURCE: manuscript Introduction. -->
+    <p>From biological specimens to digital images, fluorescence photons undergo multiple stages of photoelectric conversion, amplification, readout, and digitization, during which distinct noise sources are accumulated.</p>
   </details>
 
-  <!-- SOURCE: Introduction / Abstract. Remaining innovations with Fig. 1c. -->
+  <!-- SOURCE: manuscript Introduction contribution paragraph. -->
   <ul class="innovations">
-    <li>Learnable physical modeling of the underlying noise generation process;</li>
-    <li>Physics-informed noise decoupling and signal estimation without requiring clean images.</li>
+    <li>We designed a normalizing flow backbone that learns two reciprocal transformations to implement explicit noise modeling and parameter estimation.</li>
+    <li>By combining the flow-based noise model with a denoising network, DeepPhD can accurately decompose and remove complex noise components.</li>
   </ul>
 
-  <!-- SOURCE: Fig. 1c. Concise framework preview; detailed workflow is on About. -->
+  <!-- SOURCE: Fig. 1c. Concise framework preview. -->
   <img src="{{ site.baseurl }}/images/deepphd_fig1_c.png" class="section-figure" alt="DeepPhD framework: image restoration and physical modeling">
 
   <details class="caption-more">
     <summary>More information</summary>
+    <!-- SOURCE: Methods workflow detail; kept only under More information. -->
     <p>The physical modeling module learns to estimate noise parameters, including the system gain α, the Gaussian noise variance β, and the FPN pattern. For image restoration, we designed a two-stage scheme composed of noise decoupling and signal estimation.</p>
   </details>
 
@@ -163,7 +165,7 @@ title: Home
     <img src="{{ site.baseurl }}/images/deepphd_fig1_def.png" class="section-figure" alt="Physical consistency of DeepPhD: learned FPN, RN, MPGN statistics, and lysosome restoration">
   </div>
   <p>
-    We illustrated the physical consistency of the proposed framework in a proof-of-concept experiment by visualizing the noise components learned by DeepPhD. Consistent with theoretical expectations, FPN and RN can be accurately estimated at the pixel level, and the decoupled intermediate MPGN images show high statistical agreement with GT, thereby enabling faithful image restoration from severely degraded observations in a physics-informed manner.
+    Beyond denoising performance, we evaluated the physical consistency and interpretability of the physics-based features learned within the noise-flow. Consistent with theoretical expectations, FPN and RN can be accurately estimated at the pixel level, and the decoupled intermediate MPGN images show high statistical agreement with GT, highlighting the ability of DeepPhD to estimate instrument-related noise characteristics.
   </p>
   <details class="caption-more">
     <summary>More information</summary>
@@ -206,7 +208,7 @@ title: Home
   <!-- SOURCE: v13 Results, Fig. 2a–c. -->
   <img src="{{ site.baseurl }}/images/deepphd_fig2_abc.png" class="section-figure" alt="Denoising results and quantitative comparison on synthetic volumetric imaging data of interphase HeLa cells">
   <p>
-    Among these methods, DeepPhD achieves the most accurate restoration without smoothing structures or leaving residual noise. In contrast, DeepPhD achieves the highest and most stable output SNR across all noise configurations. DeepPhD demonstrates superior robustness to structured noise across the evaluated range.
+    Among these methods, DeepPhD produced results with superior fidelity to the GT images. In contrast, DeepPhD achieves the highest and most stable output SNR across all noise configurations. DeepPhD demonstrates superior robustness to structured noise across the evaluated range.
   </p>
   <details class="caption-more">
     <summary>More information</summary>
@@ -244,7 +246,7 @@ title: Home
 
     <div class="app-block">
       <img src="{{ site.baseurl }}/images/deepphd_app_page_01.png" class="section-figure app-figure" alt="Raw versus DeepPhD 3D reconstruction of GABAergic neurons in larval zebrafish">
-      <p class="app-desc">Although the raw images are heavily contaminated by both random and structured noise, DeepPhD can still eliminate all noise components and restore underlying fluorescence signals. GABAergic neurons in the brain and spinal cord can be clearly reconstructed in 3D after denoising.</p>
+      <p class="app-desc">Although the raw images are heavily contaminated by both random and structured noise, DeepPhD can effectively suppress noise components and restore underlying fluorescence signals. GABAergic neurons in the brain and spinal cord can be clearly reconstructed in 3D after denoising.</p>
       <details class="caption-more">
         <summary>More information</summary>
       </details>
@@ -339,7 +341,7 @@ title: Home
 
     <div class="app-block">
       <img src="{{ site.baseurl }}/images/deepphd_app_page_10.png" class="section-figure app-figure" alt="Neutrophil morphology and migration dynamics restored by DeepPhD">
-      <p class="app-desc">Trained solely on the low-SNR raw data, DeepPhD can learn to restore the exact morphological structures and migration dynamics of all neutrophils in the FOV. It can reveal the evolution of neutrophil uropods and resolve polarized rear compartments that coordinate contraction, adhesion release, and forward cell translocation during migration.</p>
+      <p class="app-desc">Trained solely on the low-SNR raw data, DeepPhD can learn to restore the morphological structures and migration dynamics of all neutrophils in the FOV. It can reveal the evolution of neutrophil uropods and resolve polarized rear compartments that coordinate contraction, adhesion release, and forward cell translocation during migration.</p>
       <details class="caption-more">
         <summary>More information</summary>
       </details>
