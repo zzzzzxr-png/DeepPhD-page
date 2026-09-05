@@ -27,7 +27,7 @@ Since noise from different sources has different physical properties and statist
      class="section-figure"
      alt="Physical imaging process and heterogeneous noise components in fluorescence microscopy">
 
-However, these data-driven methods do not incorporate explicit noise modeling, which leads to two intrinsic deficiencies.
+However, existing data-driven denoising methods do not incorporate explicit noise modeling, which leads to two intrinsic deficiencies.
 
 First, they can only handle noise components that conform to the conservative assumptions of zero mean and pixel independence.
 
