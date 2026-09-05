@@ -661,12 +661,22 @@
   }
 }
 
+.app-cta {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 0.75rem 0 0.4rem;
+}
+
+.app-cta .arrow-link {
+  display: inline-flex;
+  width: auto;
+  margin: 0;
+}
+
 .app-scene .arrow-link,
 .app-subscene .arrow-link {
-  display: flex;
-  width: max-content;
-  max-width: 100%;
-  margin: 0.2rem auto 0.4rem;
+  display: inline-flex;
 }
 
 #results > h4 {
