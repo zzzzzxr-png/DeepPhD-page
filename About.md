@@ -50,8 +50,6 @@ Here we present DeepPhD, a self-supervised framework that incorporates explicit 
      class="section-figure"
      alt="DeepPhD framework: physics-informed image restoration and physical modeling">
 
-The entire framework is trained in a self-supervised manner through parameter sharing and joint optimization.
-
 <div class="about-cta">
 {% include arrow-link.html href="/#results" text="View Results" %}
 </div>
