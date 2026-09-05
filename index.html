@@ -160,12 +160,12 @@ title: Home
 
   <h4>Synthetic data</h4>
   <!-- SOURCE: v13 Results, Fig. 1d–f. VERBATIM except parenthetical panel refs removed. -->
-  <p>
-    We illustrated the physical consistency of the proposed framework in a proof-of-concept experiment by visualizing the noise components learned by DeepPhD. Consistent with theoretical expectations, FPN and RN can be accurately estimated at the pixel level, and the decoupled intermediate MPGN images show high statistical agreement with GT, thereby enabling faithful image restoration from severely degraded observations in a physics-informed manner.
-  </p>
   <div class="figure-row">
     <img src="{{ site.baseurl }}/images/deepphd_fig1_def.png" class="section-figure" alt="Physical consistency of DeepPhD: learned FPN, RN, MPGN statistics, and lysosome restoration">
   </div>
+  <p>
+    We illustrated the physical consistency of the proposed framework in a proof-of-concept experiment by visualizing the noise components learned by DeepPhD. Consistent with theoretical expectations, FPN and RN can be accurately estimated at the pixel level, and the decoupled intermediate MPGN images show high statistical agreement with GT, thereby enabling faithful image restoration from severely degraded observations in a physics-informed manner.
+  </p>
   <details class="caption-more">
     <summary>More information</summary>
     <!-- SOURCE: v13 Fig. 1d–f captions. N= omitted. -->
@@ -174,12 +174,12 @@ title: Home
 
   <!-- SOURCE: v13 Results, Fig. 2d–e. VERBATIM. -->
   <div id="noise-param-estimation">
-  <p>
-    Extensive numerical experiments show that the system gain (α) and the Gaussian variance (β) can be accurately estimated over a wide range of values. Across a wide range of noise intensities, DeepPhD can learn the exact patterns of FPN and RN, thereby removing these two noise components with small residuals.
-  </p>
   <div class="figure-row">
     <img src="{{ site.baseurl }}/images/deepphd_fig2_de.png" class="section-figure" alt="MPGN parameter estimation and FPN/RN estimation accuracy">
   </div>
+  <p>
+    Extensive numerical experiments show that the system gain (α) and the Gaussian variance (β) can be accurately estimated over a wide range of values. Across a wide range of noise intensities, DeepPhD can learn the exact patterns of FPN and RN, thereby removing these two noise components with small residuals.
+  </p>
   <details class="caption-more">
     <summary>More information</summary>
     <!-- SOURCE: v13 Fig. 2d–e captions. N= omitted. -->
@@ -189,10 +189,10 @@ title: Home
 
   <h4>Experimental data</h4>
   <!-- SOURCE: SI Supplementary Figure 8 caption. Visible: first 3 sentences. VERBATIM. -->
+  <img src="{{ site.baseurl }}/images/deepphd_supp_fig8.png" class="section-figure" alt="Verifying the FPN pattern learned by DeepPhD">
   <p>
     The multi-frame average projection of the raw image stack is compared with the FPN pattern estimated by DeepPhD, alongside a representative raw frame and the corresponding denoised frame. MPGN and RN vary between different frames, whereas FPN remains fixed. Averaging multiple frames therefore reduces MPGN and RN while retaining FPN, which is especially apparent in signal-free regions.
   </p>
-  <img src="{{ site.baseurl }}/images/deepphd_supp_fig8.png" class="section-figure" alt="Verifying the FPN pattern learned by DeepPhD">
   <details class="caption-more">
     <summary>More information</summary>
     <!-- SOURCE: SI Supplementary Figure 8 caption. Final two sentences. VERBATIM. -->
@@ -205,10 +205,10 @@ title: Home
 
   <h4>Synthetic data</h4>
   <!-- SOURCE: v13 Results, Fig. 2a–c. -->
+  <img src="{{ site.baseurl }}/images/deepphd_fig2_abc.png" class="section-figure" alt="Denoising results and quantitative comparison on synthetic volumetric imaging data of interphase HeLa cells">
   <p>
     Among these methods, DeepPhD achieves the most accurate restoration without smoothing structures or leaving residual noise. In contrast, DeepPhD achieves the highest and most stable output SNR across all noise configurations. DeepPhD demonstrates superior robustness to structured noise across the evaluated range.
   </p>
-  <img src="{{ site.baseurl }}/images/deepphd_fig2_abc.png" class="section-figure" alt="Denoising results and quantitative comparison on synthetic volumetric imaging data of interphase HeLa cells">
   <details class="caption-more">
     <summary>More information</summary>
     <!-- SOURCE: v13 Fig. 2a–c captions. N= omitted. -->
@@ -217,10 +217,10 @@ title: Home
 
   <h4>Experimental data</h4>
   <!-- SOURCE: v13 Results, Supplementary Fig. 7. VERBATIM. -->
+  <img src="{{ site.baseurl }}/images/deepphd_supp_fig7.png" class="section-figure" alt="Comparing different denoising methods on light-sheet imaging of larval zebrafish">
   <p>
     Compared with existing methods, DeepPhD not only suppresses random noise but also effectively eliminates spatiotemporally structured artifacts without distorting the underlying biological morphology, thereby unveiling the spatial distribution of GABAergic neurons in larval zebrafish.
   </p>
-  <img src="{{ site.baseurl }}/images/deepphd_supp_fig7.png" class="section-figure" alt="Comparing different denoising methods on light-sheet imaging of larval zebrafish">
   <details class="caption-more">
     <summary>More information</summary>
     <!-- SOURCE: v13 SI Supplementary Figure 7 caption. -->
