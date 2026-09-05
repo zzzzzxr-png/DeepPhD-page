@@ -80,9 +80,9 @@ Please choose an appropriate noise model that matches how your data were acquire
 
 | Sensor | Typical modalities | Recommended `--noise_model` |
 |------------------|--------------------|-----------------------------|
-| Scanning detection (PMTs) | Two-photon microscopy, three-photon microscopy, *etc.* | `mpgn` |
-| Parallel camera-array detection (EMCCD) | TIRF, singlemolecule localization microscopy (SMLM), *etc.* | `fpn\|mpgn` |
-| Row-serial camera-array detection (CMOS) | Light-sheet microscopy, widefield microscopy, *etc.* | `fpn\|rn\|mpgn` |
+| Scanning detection (PMTs) | Two-photon microscopy, three-photon microscopy, *etc.* | <code>mpgn</code> |
+| Parallel camera-array detection (EMCCD) | TIRF, singlemolecule localization microscopy (SMLM), *etc.* | <code>fpn&#124;mpgn</code> |
+| Row-serial camera-array detection (CMOS) | Light-sheet microscopy, widefield microscopy, *etc.* | <code>fpn&#124;rn&#124;mpgn</code> |
 
 Quote the `--noise_model` value in the shell (`'fpn|rn|mpgn'`), because `|` is a pipe operator.
 
@@ -104,7 +104,7 @@ Key arguments:
 |----------|-------------|
 | `--exp_dir` | Experiment name; logs and checkpoints are saved under `results/<exp_dir>/` |
 | `--datasets_path` | Directory containing input `.tif` stacks |
-| `--noise_model` | Noise model matching the acquisition, e.g. `fpn\|rn\|mpgn`, `fpn\|mpgn`, or `mpgn` (default: `fpn\|rn\|mpgn`) |
+| `--noise_model` | Noise model matching the acquisition, e.g. <code>fpn&#124;rn&#124;mpgn</code>, <code>fpn&#124;mpgn</code>, or <code>mpgn</code> (default: <code>fpn&#124;rn&#124;mpgn</code>) |
 | `--gpu` | Comma-separated GPU IDs (default: `0,1`) |
 | `--fresh_start` | Remove the existing experiment directory and restart training from scratch |
 | `--save_noise` | During the final validation pass, save the learned FPN and estimated RN maps |
