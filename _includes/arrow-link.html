@@ -1,0 +1,6 @@
+{%- if include.href contains "://" or include.href contains "PAPER" -%}
+  {%- assign arrow_href = include.href -%}
+{%- else -%}
+  {%- assign arrow_href = site.baseurl | append: include.href -%}
+{%- endif -%}
+<a class="arrow-link{% if include.class %} {{ include.class }}{% endif %}" href="{{ arrow_href }}"{% if include.attrs %} {{ include.attrs }}{% endif %}>{% include circle-arrow.svg %}{% if include.label_attr %}<span {{ include.label_attr }}>{{ include.text }}</span>{% else %}{{ include.text }}{% endif %}</a>

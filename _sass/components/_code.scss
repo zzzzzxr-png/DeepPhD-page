@@ -1,0 +1,99 @@
+/**
+  * _code.scss
+  * Block commands use a light-green background, not a bordered box.
+  * Inline code in sentences is unboxed: monospace + dark green only.
+  */
+
+code,
+pre {
+  font-family: $code-font-stack;
+}
+
+code {
+  padding: 0;
+  font-size: inherit;
+  color: $green-1;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+code.highlighter-rouge {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+pre {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding: 0;
+  color: $green-1;
+  background: none;
+  overflow: visible;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+pre code {
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+}
+
+div.highlight,
+div.highlighter-rouge {
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  font-size: inherit;
+  line-height: inherit;
+  color: $green-1;
+  background-color: rgba($green-5, 0.7);
+  border: 0;
+  border-radius: 0;
+
+  pre {
+    margin-bottom: 0;
+    overflow: visible;
+    color: inherit;
+    background: none;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .lineno {
+    display: inline-block;
+    padding-right: .75rem;
+    padding-left: .25rem;
+    color: $green-2;
+
+    @include prefix(user-select, none);
+  }
+}
+
+.highlighter-rouge .highlight {
+  padding: 0;
+  margin-bottom: 0;
+  background: none;
+  border: 0;
+}
+
+.highlight *,
+.highlighter-rouge * {
+  color: inherit;
+  font-style: inherit;
+}
+
+.highlight pre code,
+.highlighter-rouge pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+}

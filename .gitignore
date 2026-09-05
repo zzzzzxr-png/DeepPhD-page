@@ -1,0 +1,33 @@
+# Local / build
+_site/
+_site_build/
+.jekyll-cache/
+.bundle/
+vendor/
+*.sublime-*
+
+# Manuscript / office sources
+*.docx
+*.pptx
+images_new/
+
+# Original research videos (too large for GitHub)
+videos/Hela/
+videos/Mouse/
+videos/Zebrafish/
+videos/Neutrophils/
+videos/Dendritic spines/
+videos/supp_videos/
+videos/demo/_probe/
+
+# GitHub hard limit is 100MB per file
+
+# Helper scripts / local patch leftovers
+serve-local.ps1
+_patch_*.py
+_patch_*.js
+
+# Demo player uses stack_web only
+videos/demo/**/raw_web.mp4
+videos/demo/**/deepphd_web.mp4
+videos/demo/**/ref_web.mp4

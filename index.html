@@ -1,0 +1,365 @@
+---
+layout: default
+title: Home
+---
+
+<div class="page home-layout">
+
+<nav class="section-nav" data-section-nav aria-label="Page sections">
+  <a href="#overview">Overview</a>
+  <a href="#physical-principle">Physics-informed principle</a>
+  <a href="#results">Comprehensive evaluation</a>
+  <a href="#applications">Downstream applications</a>
+</nav>
+
+<div class="home-main">
+
+<section class="home-section hero" id="overview">
+  <h1 class="landing-title">DeepPhD: Physics-informed self-supervised<br>denoising for fluorescence imaging</h1>
+  <!-- SOURCE: manuscript / repository title. -->
+
+  <!-- SOURCE: Abstract / Overview. Physical innovation, not a title restatement. -->
+  <p class="home-sentence">
+    By explicitly modeling heterogeneous noise components within a learnable flow and informing the image restoration module of noise parameters, DeepPhD reinforces noise decoupling and signal estimation without requiring any clean images.
+  </p>
+
+  <div class="hero-actions">
+    {% include arrow-link.html href="PAPER_URL_PLACEHOLDER" text="Read the research paper" %}
+    {% include arrow-link.html href="/Tutorial/" text="Try it on your data" %}
+  </div>
+
+  <div class="demo" id="demo" data-demo>
+    <div class="demo-scenes" role="tablist" aria-label="Demo scenes">
+      <button type="button" class="scene-btn is-active" data-scene="hela"
+        data-stack="{{ site.baseurl }}/videos/demo/hela/stack_web.mp4"
+        data-ref="1"
+        data-poster="{{ site.baseurl }}/videos/demo/hela/poster.png"
+        data-title="Denoising performance of DeepPhD on synthetic volumetric imaging data of HeLa cells."
+        data-href="#denoising"
+        data-link="View detailed denoising results"
+        data-ref-label="GT">HeLa</button>
+      <button type="button" class="scene-btn" data-scene="zebrafish"
+        data-stack="{{ site.baseurl }}/videos/demo/zebrafish/stack_web.mp4"
+        data-poster="{{ site.baseurl }}/videos/demo/zebrafish/poster.png"
+        data-title="DeepPhD enables ultrasensitive light-sheet imaging of GABAergic neurons in larval zebrafish."
+        data-href="#app-zebrafish"
+        data-link="View downstream analysis">Zebrafish</button>
+      <button type="button" class="scene-btn" data-scene="mouse"
+        data-stack="{{ site.baseurl }}/videos/demo/mouse/stack_web.mp4"
+        data-poster="{{ site.baseurl }}/videos/demo/mouse/poster.png"
+        data-title="DeepPhD enables high-fidelity neural recording of freely behaving mice using head-mounted miniaturized microscopy."
+        data-href="#app-mouse"
+        data-link="View downstream analysis">Mouse</button>
+      <button type="button" class="scene-btn" data-scene="spines"
+        data-stack="{{ site.baseurl }}/videos/demo/spines/stack_web.mp4"
+        data-ref="1"
+        data-poster="{{ site.baseurl }}/videos/demo/spines/poster.png"
+        data-title="DeepPhD reveals calcium transients of dendritic spines in the mouse cortex."
+        data-href="#app-spines"
+        data-link="View downstream analysis"
+        data-ref-label="Reference">Spines</button>
+      <button type="button" class="scene-btn" data-scene="neutrophils"
+        data-stack="{{ site.baseurl }}/videos/demo/neutrophils/stack_web.mp4"
+        data-ref="1"
+        data-poster="{{ site.baseurl }}/videos/demo/neutrophils/poster.png"
+        data-title="DeepPhD enhances two-photon imaging of neutrophil migration after acute brain injury."
+        data-href="#app-neutrophils"
+        data-link="View downstream analysis"
+        data-ref-label="Reference">Neutrophils</button>
+    </div>
+
+    <div class="demo-main">
+      <div class="compare" data-compare>
+        <span class="compare-label raw">Raw</span>
+        <span class="compare-label phd">DeepPhD</span>
+        <span class="compare-label ref">GT</span>
+        <img class="compare-poster" data-compare-poster alt=""
+          src="{{ site.baseurl }}/videos/demo/hela/poster.png">
+        <canvas class="compare-canvas" data-compare-canvas></canvas>
+        <video class="compare-stack" data-stack-video muted loop playsinline preload="auto"></video>
+        <div class="compare-bar" data-bar="left">
+          <span class="compare-knob" aria-hidden="true">
+            <svg class="compare-knob-arrows" viewBox="0 0 24 12" width="18" height="9">
+              <path fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                d="M8 6H2m0 0 3-3M2 6l3 3M16 6h6m0 0-3-3m3 3-3 3"/>
+            </svg>
+          </span>
+          <div class="compare-hint" data-compare-hint hidden>
+            <span class="compare-hint-ripple"></span>
+            <span class="compare-hint-ripple compare-hint-ripple--late"></span>
+            <svg class="compare-hint-cursor" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+              <path fill="#ffffff" stroke="#111111" stroke-width="1.2" d="M5.2 3.2 18.5 12.1l-6.1 1.4 2.7 6.6-2.6 1.1-2.8-6.7-4.9 4.6z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="compare-bar compare-bar-ref" data-bar="right" hidden>
+          <span class="compare-knob" aria-hidden="true">
+            <svg class="compare-knob-arrows" viewBox="0 0 24 12" width="18" height="9">
+              <path fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                d="M8 6H2m0 0 3-3M2 6l3 3M16 6h6m0 0-3-3m3 3-3 3"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+      <p class="demo-title" data-demo-title>Denoising performance of DeepPhD on synthetic volumetric imaging data of HeLa cells.</p>
+      {% include arrow-link.html href="#denoising" text="View detailed denoising results" attrs="data-demo-link" label_attr="data-demo-link-text" %}
+    </div>
+  </div>
+</section>
+
+<section class="home-section" id="physical-principle">
+  <h2>Physics-informed principle</h2>
+
+  <!-- SOURCE: Introduction / Abstract. First innovation with Fig. 1a–b. -->
+  <ul class="innovations">
+    <li>Explicit modeling of heterogeneous noise from different optoelectronic sources, including mixed Poisson-Gaussian noise (MPGN), fixed-pattern noise (FPN), and row noise (RN);</li>
+  </ul>
+
+  <!-- SOURCE: Fig. 1a–b. Physical noise formation and decoupling. -->
+  <img src="{{ site.baseurl }}/images/deepphd_fig1_ab.png" class="section-figure" alt="Physical imaging process and noise composition">
+
+  <details class="caption-more">
+    <summary>More information</summary>
+    <p>Fluorescence photons undergo photoelectric conversion, amplification, readout, and digitization. The overall noise model is an additive combination of MPGN, FPN, and RN.</p>
+  </details>
+
+  <!-- SOURCE: Introduction / Abstract. Remaining innovations with Fig. 1c. -->
+  <ul class="innovations">
+    <li>Learnable physical modeling of the underlying noise generation process;</li>
+    <li>Physics-informed noise decoupling and signal estimation without requiring clean images.</li>
+  </ul>
+
+  <!-- SOURCE: Fig. 1c. Concise framework preview; detailed workflow is on About. -->
+  <img src="{{ site.baseurl }}/images/deepphd_fig1_c.png" class="section-figure" alt="DeepPhD framework: image restoration and physical modeling">
+
+  <details class="caption-more">
+    <summary>More information</summary>
+    <p>The physical modeling module learns to estimate noise parameters, including the system gain α, the Gaussian noise variance β, and the FPN pattern. For image restoration, we designed a two-stage scheme composed of noise decoupling and signal estimation.</p>
+  </details>
+
+  {% include arrow-link.html href="/About/#pipeline" text="View detailed pipeline" %}
+</section>
+
+<section class="home-section" id="results">
+  <h2>Comprehensive evaluation</h2>
+
+  <div class="section-tabs demo-scenes" data-section-tabs role="tablist" aria-label="Evaluation sections">
+    <button type="button" class="scene-btn is-active" role="tab" aria-selected="true" data-tab="physical">Physical model validation</button>
+    <button type="button" class="scene-btn" role="tab" aria-selected="false" data-tab="denoising">Denoising performance</button>
+  </div>
+
+  <div class="section-panel" data-panel="physical" id="panel-physical">
+  <h3>Physical model validation</h3>
+
+  <h4>Synthetic data</h4>
+  <!-- SOURCE: v13 Results, Fig. 1d–f. VERBATIM except parenthetical panel refs removed. -->
+  <p>
+    We illustrated the physical consistency of the proposed framework in a proof-of-concept experiment by visualizing the noise components learned by DeepPhD. Consistent with theoretical expectations, FPN and RN can be accurately estimated at the pixel level, and the decoupled intermediate MPGN images show high statistical agreement with GT, thereby enabling faithful image restoration from severely degraded observations in a physics-informed manner.
+  </p>
+  <div class="figure-row">
+    <img src="{{ site.baseurl }}/images/deepphd_fig1_def.png" class="section-figure" alt="Physical consistency of DeepPhD: learned FPN, RN, MPGN statistics, and lysosome restoration">
+  </div>
+  <details class="caption-more">
+    <summary>More information</summary>
+    <!-- SOURCE: v13 Fig. 1d–f captions. N= omitted. -->
+    <p>Estimated consistency of FPN and RN: GT versus DeepPhD learned noise patterns. Statistical consistency of MPGN modeling: probability density functions of the DeepPhD learned MPGN image and GT are overlaid on the same axes. Denoising performance of synthetic 3D lysosome images with complex noise components: raw, GT, and DeepPhD.</p>
+  </details>
+
+  <!-- SOURCE: v13 Results, Fig. 2d–e. VERBATIM. -->
+  <div id="noise-param-estimation">
+  <p>
+    Extensive numerical experiments show that the system gain (α) and the Gaussian variance (β) can be accurately estimated over a wide range of values. Across a wide range of noise intensities, DeepPhD can learn the exact patterns of FPN and RN, thereby removing these two noise components with small residuals.
+  </p>
+  <div class="figure-row">
+    <img src="{{ site.baseurl }}/images/deepphd_fig2_de.png" class="section-figure" alt="MPGN parameter estimation and FPN/RN estimation accuracy">
+  </div>
+  <details class="caption-more">
+    <summary>More information</summary>
+    <!-- SOURCE: v13 Fig. 2d–e captions. N= omitted. -->
+    <p>Scatterplots showing MPGN parameters learned by DeepPhD versus GT. α and β represent the system gain and the Gaussian variance in the MPGN model, respectively. Estimation accuracy of FPN and RN at different noise levels: mean absolute error between learned noise patterns and GT, and estimation errors when the noise standard deviation is 10, 50, and 100.</p>
+  </details>
+  </div>
+
+  <h4>Experimental data</h4>
+  <!-- SOURCE: SI Supplementary Figure 8 caption. Visible: first 3 sentences. VERBATIM. -->
+  <p>
+    The multi-frame average projection of the raw image stack is compared with the FPN pattern estimated by DeepPhD, alongside a representative raw frame and the corresponding denoised frame. MPGN and RN vary between different frames, whereas FPN remains fixed. Averaging multiple frames therefore reduces MPGN and RN while retaining FPN, which is especially apparent in signal-free regions.
+  </p>
+  <img src="{{ site.baseurl }}/images/deepphd_supp_fig8.png" class="section-figure" alt="Verifying the FPN pattern learned by DeepPhD">
+  <details class="caption-more">
+    <summary>More information</summary>
+    <!-- SOURCE: SI Supplementary Figure 8 caption. Final two sentences. VERBATIM. -->
+    <p>Magnified views of the boxed signal-free regions are shown below. Scale bars, 100 μm for the whole FOV and 10 μm for magnified views.</p>
+  </details>
+  </div>
+
+  <div class="section-panel" data-panel="denoising" id="denoising" hidden>
+  <h3>Denoising performance</h3>
+
+  <h4>Synthetic data</h4>
+  <!-- SOURCE: v13 Results, Fig. 2a–c. -->
+  <p>
+    Among these methods, DeepPhD achieves the most accurate restoration without smoothing structures or leaving residual noise. In contrast, DeepPhD achieves the highest and most stable output SNR across all noise configurations. DeepPhD demonstrates superior robustness to structured noise across the evaluated range.
+  </p>
+  <img src="{{ site.baseurl }}/images/deepphd_fig2_abc.png" class="section-figure" alt="Denoising results and quantitative comparison on synthetic volumetric imaging data of interphase HeLa cells">
+  <details class="caption-more">
+    <summary>More information</summary>
+    <!-- SOURCE: v13 Fig. 2a–c captions. N= omitted. -->
+    <p>Denoising results on synthetic volumetric imaging data of interphase HeLa cells. Magnified views of boxed regions show subcellular structures restored by different denoising methods. From left to right: raw images, SN2N, SUPPORT, DeepInterpolation, DeepCAD, SRDTrans, DeepPhD, and GT. Quantitative comparison of DeepPhD and other denoising methods on different noise configurations and at different noise levels.</p>
+  </details>
+
+  <h4>Experimental data</h4>
+  <!-- SOURCE: v13 Results, Supplementary Fig. 7. VERBATIM. -->
+  <p>
+    Compared with existing methods, DeepPhD not only suppresses random noise but also effectively eliminates spatiotemporally structured artifacts without distorting the underlying biological morphology, thereby unveiling the spatial distribution of GABAergic neurons in larval zebrafish.
+  </p>
+  <img src="{{ site.baseurl }}/images/deepphd_supp_fig7.png" class="section-figure" alt="Comparing different denoising methods on light-sheet imaging of larval zebrafish">
+  <details class="caption-more">
+    <summary>More information</summary>
+    <!-- SOURCE: v13 SI Supplementary Figure 7 caption. -->
+    <p>Comparing different denoising methods on light-sheet imaging of larval zebrafish. Representative light-sheet images for comparing different denoising methods on GABAergic neurons in larval zebrafish. Magnified views of the boxed regions are shown below each panel.</p>
+  </details>
+  </div>
+</section>
+
+<section class="home-section" id="applications">
+  <h2>Downstream applications</h2>
+
+  <div class="section-tabs demo-scenes" data-section-tabs role="tablist" aria-label="Application scenes">
+    <button type="button" class="scene-btn is-active" role="tab" aria-selected="true" data-tab="zebrafish">Zebrafish</button>
+    <button type="button" class="scene-btn" role="tab" aria-selected="false" data-tab="mouse">Mouse</button>
+    <button type="button" class="scene-btn" role="tab" aria-selected="false" data-tab="spines">Spines</button>
+    <button type="button" class="scene-btn" role="tab" aria-selected="false" data-tab="neutrophils">Neutrophils</button>
+  </div>
+
+  <!-- SOURCE: DeepPhD_figs_v4-page.pptx pages 1–3. VERBATIM descriptions. -->
+  <article class="app-scene section-panel" id="app-zebrafish" data-panel="zebrafish">
+    <h3>Ultrasensitive light-sheet imaging of GABAergic neurons in larval zebrafish</h3>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_01.png" class="section-figure app-figure" alt="Raw versus DeepPhD 3D reconstruction of GABAergic neurons in larval zebrafish">
+      <p class="app-desc">Although the raw images are heavily contaminated by both random and structured noise, DeepPhD can still eliminate all noise components and restore underlying fluorescence signals. GABAergic neurons in the brain and spinal cord can be clearly reconstructed in 3D after denoising.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+    </div>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_02.png" class="section-figure app-figure" alt="Morphology comparison of Raw, DeepPhD, and high-SNR reference with correlation analysis">
+      <p class="app-desc">After DeepPhD denoising, fine neuronal morphology can be preserved in close correspondence with the high-SNR reference, and individual neurons are clearly resolved. Statistical analysis and hypothesis testing confirmed significant increases in image correlation for all three dimensions after denoising.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+    </div>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_03.png" class="section-figure app-figure" alt="Calcium imaging traces of GABAergic neurons before and after DeepPhD">
+      <p class="app-desc">DeepPhD was used to process the calcium imaging data for ultrasensitive characterization of calcium transients. Many subtle and clustered spiking events previously invisible in the raw images become clearly discernible after denoising. The kinetics of the calcium indicator are also well preserved.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+</div>
+
+    {% include arrow-link.html href="/Gallery/#zebrafish" text="View video" %}
+  </article>
+
+  <!-- SOURCE: DeepPhD_figs_v4-page.pptx pages 4–7. VERBATIM descriptions. -->
+  <article class="app-scene section-panel" id="app-mouse" data-panel="mouse" hidden>
+    <h3>High-fidelity neural recording of freely behaving mice with head-mounted miniaturized microscopy</h3>
+
+    <div class="app-block app-block--compact">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_04.png" class="section-figure app-figure" alt="Neuroethological recording platform with miniaturized microscopy and animal tracking">
+      <p class="app-desc">We built a neuroethological recording platform combining miniaturized widefield microscopy and unsupervised animal tracking for simultaneous behavioral and neural analysis.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+    </div>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_05.png" class="section-figure app-figure" alt="Raw versus DeepPhD neural activity and fluorescence traces in freely behaving mice">
+      <p class="app-desc">Although only a limited number of neurons are visible in the raw data due to severe noise, calcium transients from many neurons reemerge after denoising. Fluorescence traces extracted from consecutive frames also capture spiking events with higher fidelity.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+    </div>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_06.png" class="section-figure app-figure" alt="Neuron segmentation and diameter statistics for Raw versus DeepPhD">
+      <p class="app-desc">DeepPhD facilitates more accurate neuron extraction and substantially reduces false-positive pixels in the segmentation mask. The neuron diameters obtained from denoised images are concentrated in the range of 10–15 µm, which is consistent with previously reported values.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+</div>
+
+    <div class="app-block app-block--overlay">
+      <div class="app-overlay">
+        <img src="{{ site.baseurl }}/images/deepphd_app_page_07.png" class="section-figure app-figure" alt="Neuroethological analysis of spike rate versus companion distance">
+        <p class="app-desc app-desc--overlay app-desc--overlay-tight">After DeepPhD denoising, the spike rate of the observed neurons significantly increased when companions were nearby. DeepPhD enables high-fidelity neural recording in neuroethological research and reveals the phenomenon that cortical neurons tend to be more active when the mouse is surrounded by companions.</p>
+      </div>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+</div>
+
+    {% include arrow-link.html href="/Gallery/#mouse" text="View video" %}
+  </article>
+
+  <!-- SOURCE: DeepPhD_figs_v4-page.pptx pages 8–9. VERBATIM descriptions. -->
+  <article class="app-scene section-panel" id="app-spines" data-panel="spines" hidden>
+    <h3>Calcium imaging at the dendritic spine level</h3>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_08.png" class="section-figure app-figure" alt="Dendritic spine restoration and calcium dynamics with DeepPhD">
+      <p class="app-desc">DeepPhD restores dendritic continuity and enables reliable identification of individual postsynaptic spines, with spine positions and morphologies closely matching the high-SNR references. It preserves rapid and low-amplitude calcium transients.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+</div>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_09.png" class="section-figure app-figure" alt="Calcium traces showing functional heterogeneity of dendritic spines">
+      <p class="app-desc">These traces clearly indicate the fact that calcium signals in spines on the same dendritic branch still exhibit different dynamics, which could provide evidence for the functional heterogeneity of dendritic spines.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+</div>
+
+    {% include arrow-link.html href="/Gallery/#spines" text="View video" %}
+  </article>
+
+  <!-- SOURCE: DeepPhD_figs_v4-page.pptx pages 10–12. VERBATIM descriptions. -->
+  <article class="app-scene section-panel" id="app-neutrophils" data-panel="neutrophils" hidden>
+    <h3>Two-photon imaging of immune cell migration</h3>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_10.png" class="section-figure app-figure" alt="Neutrophil morphology and migration dynamics restored by DeepPhD">
+      <p class="app-desc">Trained solely on the low-SNR raw data, DeepPhD can learn to restore the exact morphological structures and migration dynamics of all neutrophils in the FOV. It can reveal the evolution of neutrophil uropods and resolve polarized rear compartments that coordinate contraction, adhesion release, and forward cell translocation during migration.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+    </div>
+
+    <div class="app-block app-block--overlay">
+      <div class="app-overlay">
+        <img src="{{ site.baseurl }}/images/deepphd_app_page_11.png" class="section-figure app-figure" alt="Neutrophil segmentation examples with F1 and IoU quantification">
+        <p class="app-desc app-desc--overlay">Improved delineation of cell boundaries enables more accurate neutrophil segmentation, resulting in reduced false-negative and false-positive pixels in segmented cell masks. Segmentation accuracy is quantified with F1 score and Intersection-over-Union (IoU) score.</p>
+      </div>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+    </div>
+
+    <div class="app-block">
+      <img src="{{ site.baseurl }}/images/deepphd_app_page_12.png" class="section-figure app-figure app-figure--wide" alt="Neutrophil migration trajectories before and after DeepPhD">
+      <p class="app-desc">DeepPhD further enhances neutrophil tracking to obtain more continuous migration trajectories. DeepPhD increases the number of trajectories lasting longer than 30 s from 176 to 243, and those lasting longer than 3 min from 16 to 51.</p>
+      <details class="caption-more">
+        <summary>More information</summary>
+      </details>
+    </div>
+
+    {% include arrow-link.html href="/Gallery/#neutrophils" text="View video" %}
+  </article>
+</section>
+
+</div>
+</div>

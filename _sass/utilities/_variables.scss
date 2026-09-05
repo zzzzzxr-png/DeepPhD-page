@@ -1,0 +1,47 @@
+/**
+  * _variables.scss
+  * Contains SCSS variables used in this website's stylesheet.
+  */
+
+// Globals
+$font-stack: Arial, Helvetica, sans-serif;
+$font-size: 19px;
+$font-size-mobile: 19px;
+
+$code-font-stack: Consolas, "Cascadia Code", "Courier New", Monaco, monospace;
+
+// Palette (sampled from the provided green swatches, dark → light)
+$green-1: #395723;
+$green-2: #538234;
+$green-3: #A8D18D;
+$green-4: #C5E0B5;
+$green-5: #E2F0D9;
+
+// Body
+$body-text-color: #515151;
+$body-background-color: #ffffff;
+$body-top-border-color: $green-1;
+$body-top-border-width: 5px;
+
+// Links
+$link-color: $green-2;
+
+// Navigation
+$nav-bottom-border-color: $green-4;
+$nav-bottom-border-width: 1px;
+
+$nav-link-color: $green-1;
+$nav-link-padding-y: 0.7rem;
+$nav-link-padding-x: 1.5rem;
+$nav-link-underline-color: $green-2;
+
+$nav-icon-color: #ffffff;
+$nav-icon-background-color: $green-1;
+
+// Blog post headings and page titles
+$post-title-color: $green-1;
+$post-date-color: #9a9a9a;
+
+// Message box
+$message-color: #717171;
+$message-background-color: #f9f9f9;

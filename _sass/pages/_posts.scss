@@ -1,0 +1,214 @@
+/**
+  * _posts.scss
+  * Each post is wrapped in `.post` and is used on default and post layouts. Each
+  * page is wrapped in `.page` and is only used on the page layout.
+  */
+
+.page,
+.post {
+  margin-bottom: 4em;
+}
+
+.page h2,
+.post h2 {
+  scroll-margin-top: 1.2rem;
+}
+
+.page img,
+.post img,
+.section-figure {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0.4rem auto 0.2rem;
+}
+
+.video-wrapper {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  margin: 18px auto 32px auto;
+}
+
+.video-wrapper iframe,
+.video-wrapper video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #111;
+}
+
+.gallery-player {
+  width: 100%;
+  margin: 1rem 0 1.6rem;
+}
+
+.gallery-video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  background: #111;
+}
+
+.gallery-scrub {
+  position: relative;
+  height: 1.6rem;
+  margin-top: 0.45rem;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.gallery-scrub-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  background: $green-4;
+}
+
+.gallery-scrub-bar {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  z-index: 2;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: $green-2;
+  box-sizing: border-box;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.caption-more {
+  margin: 0.55rem 0;
+}
+
+.caption-more > summary {
+  display: inline-block;
+  cursor: pointer;
+  color: $link-color;
+  list-style: none;
+  margin-bottom: 0.25rem;
+  user-select: none;
+}
+
+.caption-more > summary::before {
+  content: ">> ";
+}
+
+.caption-more > summary::-webkit-details-marker,
+.caption-more > summary::marker {
+  display: none;
+  content: "";
+}
+
+.caption-more > summary:hover,
+.caption-more > summary:focus {
+  text-decoration: underline;
+}
+
+.caption-more[open] {
+  margin-bottom: 0.45rem;
+}
+
+.caption-more[open] > summary {
+  margin-bottom: 0.25rem;
+}
+
+// Blog post or page title
+.page-title,
+.post-title,
+.post-title a {
+  color: $post-title-color;
+}
+.page-title,
+.post-title {
+  margin-top: 0;
+  color: $green-1;
+  font-weight: bold;
+}
+
+.page-arrow-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 0 1.1rem;
+}
+
+.page .page-title {
+  text-align: center;
+}
+
+.page-toplinks {
+  text-align: center;
+  margin: 0 0 1.1rem;
+}
+
+.page > h2,
+.page .gallery-entry > h2 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.page > h2::before,
+.page > h2::after,
+.page .gallery-entry > h2::before,
+.page .gallery-entry > h2::after {
+  content: "";
+  flex: 1 1 0;
+  min-width: 1.5rem;
+  height: 0;
+  border-top: 1px solid currentColor;
+}
+
+.page .gallery-entry > h2 > span {
+  flex: 0 1 auto;
+  text-align: center;
+}
+
+.page .gallery-entry > h2 .gallery-title-tight {
+  font-size: 0.92em;
+  white-space: nowrap;
+}
+
+@media (max-width: 40em) {
+  .page .gallery-entry > h2 .gallery-title-tight {
+    white-space: normal;
+  }
+}
+
+.gallery-entry > .arrow-link {
+  display: inline-flex;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gallery-entry {
+  text-align: center;
+}
+
+// Meta data line below post title
+.post-date {
+  display: block;
+  margin-top: -.5rem;
+  margin-bottom: 1rem;
+  color: $post-date-color;
+}

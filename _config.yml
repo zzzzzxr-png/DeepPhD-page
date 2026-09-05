@@ -1,0 +1,45 @@
+title:               DeepPhD
+url:                 https://zzzzzxr-png.github.io
+baseurl:             "/DeepPhD-page"
+markdown:            kramdown
+highlighter:         rouge
+
+exclude:
+  - '*.sublime-*'
+  - README.md
+  - LICENSE
+  - Gemfile
+  - Gemfile.lock
+  - vendor/bundle
+  - '*.docx'
+  - videos/Hela
+  - videos/Mouse
+  - videos/Zebrafish
+  - videos/Neutrophils
+  - 'videos/Dendritic spines'
+  - videos/supp_videos
+  - videos/demo/_probe
+  - images_new
+  - '*.pptx'
+  - _site_build
+  - serve-local.ps1
+
+keep_files:
+  - videos
+
+permalink:           pretty
+paginate:            5
+
+sass:
+  sass_dir:          _sass
+  style:             :compressed
+
+author:
+  name:              DeepPhD
+  url:               https://zzzzzxr-png.github.io/DeepPhD-page
+  email:
+
+plugins:
+  - jekyll-coffeescript
+  - jekyll-paginate
+  - jekyll-gist
