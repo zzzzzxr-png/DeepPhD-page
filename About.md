@@ -56,4 +56,6 @@ DeepPhD is grounded in a comprehensive physical dissection of image degradation,
 
 Extensive qualitative and quantitative evaluations demonstrate that DeepPhD can achieve reliable denoising and facilitate accurate biological analysis from severely corrupted images.
 
+<div class="about-cta">
 {% include arrow-link.html href="/#results" text="View Results" %}
+</div>
