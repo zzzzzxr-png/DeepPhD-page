@@ -38,7 +38,6 @@
     var slider = root.querySelector("[data-compare]");
     if (!slider) return;
 
-    var videos = slider.querySelectorAll("[data-stack-video]");
     var canvas = slider.querySelector("[data-compare-canvas]");
     var poster = slider.querySelector("[data-compare-poster]");
     var leftBar = slider.querySelector("[data-bar='left']");
@@ -51,14 +50,11 @@
     var linkText = root.querySelector("[data-demo-link-text]");
     var buttons = root.querySelectorAll("[data-scene]");
     var hint = slider.querySelector("[data-compare-hint]");
-    if (!videos.length || !canvas) return;
+    if (!canvas || !buttons.length) return;
 
-    // Ping-pong buffers: load next scene on the idle element, then swap.
-    var bufA = videos[0];
-    var bufB = videos[1] || videos[0];
-    var active = bufA;
-    var idle = bufB;
-
+    // One decoded <video> per stack, kept in memory after blob prefetch.
+    var pool = Object.create(null);
+    var active = null;
     var ctx = canvas.getContext("2d");
     var hasRef = false;
     var lanes = 2;
@@ -73,10 +69,6 @@
     var expectedSrc = "";
     var drawing = false;
     var ready = false;
-    var switchTimer = null;
-
-    mute(bufA);
-    mute(bufB);
 
     function placeLabel(el, a, b) {
       if (!el) return;
@@ -145,6 +137,7 @@
     }
 
     function drawLane(laneIndex, x0, x1) {
+      if (!active) return;
       var vw = active.videoWidth;
       var vh = active.videoHeight;
       if (!vw || !vh || x1 <= x0) return;
@@ -168,7 +161,7 @@
     }
 
     function drawFrame() {
-      if (!ready || active.readyState < 2) return;
+      if (!ready || !active || active.readyState < 2) return;
       resizeCanvas();
       var cw = canvas.width;
       var mid = left * cw;
@@ -196,15 +189,15 @@
     }
 
     function playActive(token) {
-      if (token !== loadToken || !visible || !activeBtn) return;
-      if ((active.getAttribute("src") || "") !== expectedSrc) return;
+      if (token !== loadToken || !visible || !activeBtn || !active) return;
+      if ((active.getAttribute("data-stack-src") || "") !== expectedSrc) return;
       mute(active);
       var p = active.play();
       if (p && p.catch) p.catch(function () {});
       startLoop();
       clearKeep();
       keepTimer = window.setInterval(function () {
-        if (token !== loadToken || !visible || !activeBtn) {
+        if (token !== loadToken || !visible || !activeBtn || !active) {
           clearKeep();
           return;
         }
@@ -214,13 +207,6 @@
           if (again && again.catch) again.catch(function () {});
         }
       }, 800);
-    }
-
-    function swapTo(el) {
-      if (el === active) return;
-      pauseEl(active);
-      active = el;
-      idle = el === bufA ? bufB : bufA;
     }
 
     function bindDrag() {
@@ -257,30 +243,143 @@
       });
     }
 
-    function attachTo(el, src) {
-      mute(el);
-      el.preload = "auto";
-      if ((el.getAttribute("src") || "") === src && el.readyState >= 2) return false;
-      el.setAttribute("src", src);
-      try { el.load(); } catch (e) {}
-      return true;
+    function getEntry(src) {
+      var entry = pool[src];
+      if (entry) return entry;
+      var video = document.createElement("video");
+      video.className = "compare-stack";
+      video.muted = true;
+      video.defaultMuted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.preload = "auto";
+      video.setAttribute("muted", "");
+      video.setAttribute("playsinline", "");
+      video.setAttribute("aria-hidden", "true");
+      video.setAttribute("data-stack-src", src);
+      slider.appendChild(video);
+      mute(video);
+      entry = {
+        src: src,
+        video: video,
+        blobUrl: null,
+        promise: null,
+        ready: false
+      };
+      pool[src] = entry;
+      return entry;
+    }
+
+    function waitVideoReady(video) {
+      return new Promise(function (resolve) {
+        if (video.readyState >= 3) {
+          resolve();
+          return;
+        }
+        var done = false;
+        function finish() {
+          if (done) return;
+          done = true;
+          video.removeEventListener("canplaythrough", finish);
+          video.removeEventListener("loadeddata", finish);
+          video.removeEventListener("error", finish);
+          resolve();
+        }
+        video.addEventListener("canplaythrough", finish);
+        video.addEventListener("loadeddata", finish);
+        video.addEventListener("error", finish);
+        // Fallback if events already fired / stalled.
+        window.setTimeout(finish, 12000);
+      });
+    }
+
+    function loadEntry(src) {
+      var entry = getEntry(src);
+      if (entry.ready && entry.video.readyState >= 2) {
+        return Promise.resolve(entry);
+      }
+      if (entry.promise) return entry.promise;
+
+      entry.promise = fetch(src, { credentials: "same-origin", cache: "force-cache" })
+        .then(function (res) {
+          if (!res.ok) throw new Error("fetch failed");
+          return res.blob();
+        })
+        .then(function (blob) {
+          if (entry.blobUrl) {
+            try { URL.revokeObjectURL(entry.blobUrl); } catch (e) {}
+          }
+          entry.blobUrl = URL.createObjectURL(blob);
+          var video = entry.video;
+          mute(video);
+          video.setAttribute("data-stack-src", src);
+          video.src = entry.blobUrl;
+          try { video.load(); } catch (e) {}
+          return waitVideoReady(video).then(function () {
+            entry.ready = video.readyState >= 2;
+            return entry;
+          });
+        })
+        .catch(function () {
+          // Network / CORS fallback: let the browser stream from the URL.
+          var video = entry.video;
+          mute(video);
+          video.setAttribute("data-stack-src", src);
+          if ((video.getAttribute("src") || "") !== src) {
+            video.src = src;
+            try { video.load(); } catch (e) {}
+          }
+          return waitVideoReady(video).then(function () {
+            entry.ready = video.readyState >= 2;
+            return entry;
+          });
+        });
+
+      return entry.promise;
+    }
+
+    function warmAll(preferSrc) {
+      var srcs = [];
+      buttons.forEach(function (btn) {
+        var src = btn.getAttribute("data-stack");
+        if (src && srcs.indexOf(src) < 0) srcs.push(src);
+      });
+      if (preferSrc) {
+        srcs = [preferSrc].concat(srcs.filter(function (s) { return s !== preferSrc; }));
+      }
+
+      var i = 0;
+      var inflight = 0;
+      var max = 2;
+
+      function pump() {
+        while (inflight < max && i < srcs.length) {
+          (function (src) {
+            inflight += 1;
+            loadEntry(src).then(function () {
+              inflight -= 1;
+              pump();
+            }, function () {
+              inflight -= 1;
+              pump();
+            });
+          })(srcs[i++]);
+        }
+      }
+
+      pump();
     }
 
     function activate(btn) {
       var stackSrc = btn.getAttribute("data-stack") || "";
       if (!stackSrc) return;
 
-      // Same scene already playing: just ensure playback.
-      if (activeBtn === btn && expectedSrc === stackSrc && ready) {
+      if (activeBtn === btn && expectedSrc === stackSrc && ready && active) {
         playActive(loadToken);
         return;
       }
 
       clearKeep();
-      if (switchTimer) {
-        window.clearTimeout(switchTimer);
-        switchTimer = null;
-      }
       loadToken += 1;
       var token = loadToken;
       activeBtn = btn;
@@ -299,55 +398,42 @@
         var posterSrc = btn.getAttribute("data-poster") || "";
         if (posterSrc) poster.setAttribute("src", posterSrc);
       }
-      // Show poster while next stack buffers — keep UI responsive.
-      ready = false;
-      slider.classList.remove("is-playing");
+
+      // Keep showing poster until the target entry is ready — no unload of others.
+      if (!(active && (active.getAttribute("data-stack-src") || "") === stackSrc && active.readyState >= 2)) {
+        ready = false;
+        slider.classList.remove("is-playing");
+      }
       applyCuts();
       showHint();
       expectedSrc = stackSrc;
 
-      // Load on the idle buffer so we never tear the currently drawn decoder mid-frame.
-      var target = idle !== active ? idle : active;
-      if (target === active) {
-        pauseEl(active);
-        stopLoop();
-      }
-
-      function commitReady(el) {
+      loadEntry(stackSrc).then(function (entry) {
         if (token !== loadToken) return;
-        if ((el.getAttribute("src") || "") !== stackSrc) return;
-        if (el.readyState < 2) return;
-        swapTo(el);
-        ready = true;
-        // Unload the other buffer after swap to free decoder capacity.
-        if (idle !== active && (idle.getAttribute("src") || "")) {
-          window.setTimeout(function () {
-            if (token !== loadToken) return;
-            unloadVideo(idle);
-          }, 120);
+        if (!entry || !entry.video) return;
+
+        if (active && active !== entry.video) {
+          pauseEl(active);
         }
-        drawFrame();
-        playActive(token);
-      }
+        active = entry.video;
+        mute(active);
 
-      // Brief yield so the previous play()/draw cycle can settle before load().
-      switchTimer = window.setTimeout(function () {
-        switchTimer = null;
-        if (token !== loadToken) return;
-        attachTo(target, stackSrc);
+        function commit() {
+          if (token !== loadToken) return;
+          if (active !== entry.video) return;
+          if (entry.video.readyState < 2) return;
+          ready = true;
+          drawFrame();
+          playActive(token);
+        }
 
-        function onReady() { commitReady(target); }
-        if (target.readyState >= 2 && (target.getAttribute("src") || "") === stackSrc) {
-          onReady();
+        if (entry.video.readyState >= 2) {
+          commit();
         } else {
-          target.addEventListener("loadeddata", onReady, { once: true });
-          target.addEventListener("canplay", onReady, { once: true });
-          target.addEventListener("error", function () {
-            if (token !== loadToken) return;
-            slider.classList.remove("is-playing");
-          }, { once: true });
+          entry.video.addEventListener("loadeddata", commit, { once: true });
+          entry.video.addEventListener("canplay", commit, { once: true });
         }
-      }, 40);
+      });
     }
 
     bindDrag();
@@ -357,21 +443,6 @@
         activate(btn);
       });
     });
-
-    // Warm the HTTP cache for other stacks after first paint.
-    window.setTimeout(function () {
-      buttons.forEach(function (btn) {
-        var src = btn.getAttribute("data-stack");
-        if (!src) return;
-        try {
-          var link = document.createElement("link");
-          link.rel = "prefetch";
-          link.as = "video";
-          link.href = src;
-          document.head.appendChild(link);
-        } catch (e) {}
-      });
-    }, 1500);
 
     window.addEventListener("resize", function () {
       if (ready) drawFrame();
@@ -406,6 +477,9 @@
     });
 
     var start = root.querySelector("[data-scene].is-active") || buttons[0];
+    var preferSrc = start ? start.getAttribute("data-stack") || "" : "";
+    // Prefetch every stack into memory (blob) as soon as the page opens.
+    warmAll(preferSrc);
     if (start) activate(start);
   }
 
