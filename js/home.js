@@ -38,7 +38,7 @@
     var slider = root.querySelector("[data-compare]");
     if (!slider) return;
 
-    var video = slider.querySelector("[data-stack-video]");
+    var videos = slider.querySelectorAll("[data-stack-video]");
     var canvas = slider.querySelector("[data-compare-canvas]");
     var poster = slider.querySelector("[data-compare-poster]");
     var leftBar = slider.querySelector("[data-bar='left']");
@@ -51,7 +51,13 @@
     var linkText = root.querySelector("[data-demo-link-text]");
     var buttons = root.querySelectorAll("[data-scene]");
     var hint = slider.querySelector("[data-compare-hint]");
-    if (!video || !canvas) return;
+    if (!videos.length || !canvas) return;
+
+    // Ping-pong buffers: load next scene on the idle element, then swap.
+    var bufA = videos[0];
+    var bufB = videos[1] || videos[0];
+    var active = bufA;
+    var idle = bufB;
 
     var ctx = canvas.getContext("2d");
     var hasRef = false;
@@ -67,8 +73,10 @@
     var expectedSrc = "";
     var drawing = false;
     var ready = false;
+    var switchTimer = null;
 
-    mute(video);
+    mute(bufA);
+    mute(bufB);
 
     function placeLabel(el, a, b) {
       if (!el) return;
@@ -136,10 +144,9 @@
       }
     }
 
-    // Cover mapping identical to CSS object-fit: cover on one stack panel.
     function drawLane(laneIndex, x0, x1) {
-      var vw = video.videoWidth;
-      var vh = video.videoHeight;
+      var vw = active.videoWidth;
+      var vh = active.videoHeight;
       if (!vw || !vh || x1 <= x0) return;
       var panelW = vw / lanes;
       var panelH = vh;
@@ -157,11 +164,11 @@
       var sy = srcOy;
       var sh = srcVisH;
       if (sw < 0.5) return;
-      ctx.drawImage(video, sx, sy, sw, sh, x0, 0, x1 - x0, ch);
+      ctx.drawImage(active, sx, sy, sw, sh, x0, 0, x1 - x0, ch);
     }
 
     function drawFrame() {
-      if (!ready || video.readyState < 2) return;
+      if (!ready || active.readyState < 2) return;
       resizeCanvas();
       var cw = canvas.width;
       var mid = left * cw;
@@ -188,11 +195,11 @@
       window.requestAnimationFrame(tick);
     }
 
-    function playStack(token) {
+    function playActive(token) {
       if (token !== loadToken || !visible || !activeBtn) return;
-      if ((video.getAttribute("src") || "") !== expectedSrc) return;
-      mute(video);
-      var p = video.play();
+      if ((active.getAttribute("src") || "") !== expectedSrc) return;
+      mute(active);
+      var p = active.play();
       if (p && p.catch) p.catch(function () {});
       startLoop();
       clearKeep();
@@ -201,12 +208,19 @@
           clearKeep();
           return;
         }
-        if (video.paused || video.ended || video.readyState < 2) {
-          mute(video);
-          var again = video.play();
+        if (active.paused || active.ended || active.readyState < 2) {
+          mute(active);
+          var again = active.play();
           if (again && again.catch) again.catch(function () {});
         }
-      }, 700);
+      }, 800);
+    }
+
+    function swapTo(el) {
+      if (el === active) return;
+      pauseEl(active);
+      active = el;
+      idle = el === bufA ? bufB : bufA;
     }
 
     function bindDrag() {
@@ -228,7 +242,7 @@
       slider.addEventListener("pointerdown", function (e) {
         hideHint();
         visible = true;
-        playStack(loadToken);
+        playActive(loadToken);
         var box = slider.getBoundingClientRect();
         var ratio = (e.clientX - box.left) / box.width;
         dragging = hasRef && Math.abs(ratio - right) < Math.abs(ratio - left) ? "right" : "left";
@@ -243,19 +257,34 @@
       });
     }
 
+    function attachTo(el, src) {
+      mute(el);
+      el.preload = "auto";
+      if ((el.getAttribute("src") || "") === src && el.readyState >= 2) return false;
+      el.setAttribute("src", src);
+      try { el.load(); } catch (e) {}
+      return true;
+    }
+
     function activate(btn) {
       var stackSrc = btn.getAttribute("data-stack") || "";
       if (!stackSrc) return;
 
+      // Same scene already playing: just ensure playback.
+      if (activeBtn === btn && expectedSrc === stackSrc && ready) {
+        playActive(loadToken);
+        return;
+      }
+
       clearKeep();
+      if (switchTimer) {
+        window.clearTimeout(switchTimer);
+        switchTimer = null;
+      }
       loadToken += 1;
       var token = loadToken;
       activeBtn = btn;
       visible = true;
-      ready = false;
-      slider.classList.remove("is-playing");
-      pauseEl(video);
-      stopLoop();
 
       buttons.forEach(function (el) {
         el.classList.toggle("is-active", el === btn);
@@ -270,29 +299,55 @@
         var posterSrc = btn.getAttribute("data-poster") || "";
         if (posterSrc) poster.setAttribute("src", posterSrc);
       }
+      // Show poster while next stack buffers — keep UI responsive.
+      ready = false;
+      slider.classList.remove("is-playing");
       applyCuts();
       showHint();
-
       expectedSrc = stackSrc;
-      mute(video);
-      video.preload = "auto";
-      if ((video.getAttribute("src") || "") !== stackSrc) {
-        video.setAttribute("src", stackSrc);
-        try { video.load(); } catch (e) {}
+
+      // Load on the idle buffer so we never tear the currently drawn decoder mid-frame.
+      var target = idle !== active ? idle : active;
+      if (target === active) {
+        pauseEl(active);
+        stopLoop();
       }
 
-      function onReady() {
+      function commitReady(el) {
         if (token !== loadToken) return;
+        if ((el.getAttribute("src") || "") !== stackSrc) return;
+        if (el.readyState < 2) return;
+        swapTo(el);
         ready = true;
+        // Unload the other buffer after swap to free decoder capacity.
+        if (idle !== active && (idle.getAttribute("src") || "")) {
+          window.setTimeout(function () {
+            if (token !== loadToken) return;
+            unloadVideo(idle);
+          }, 120);
+        }
         drawFrame();
-        playStack(token);
+        playActive(token);
       }
-      if (video.readyState >= 2 && (video.getAttribute("src") || "") === stackSrc) {
-        onReady();
-      } else {
-        video.addEventListener("loadeddata", onReady, { once: true });
-        video.addEventListener("canplay", onReady, { once: true });
-      }
+
+      // Brief yield so the previous play()/draw cycle can settle before load().
+      switchTimer = window.setTimeout(function () {
+        switchTimer = null;
+        if (token !== loadToken) return;
+        attachTo(target, stackSrc);
+
+        function onReady() { commitReady(target); }
+        if (target.readyState >= 2 && (target.getAttribute("src") || "") === stackSrc) {
+          onReady();
+        } else {
+          target.addEventListener("loadeddata", onReady, { once: true });
+          target.addEventListener("canplay", onReady, { once: true });
+          target.addEventListener("error", function () {
+            if (token !== loadToken) return;
+            slider.classList.remove("is-playing");
+          }, { once: true });
+        }
+      }, 40);
     }
 
     bindDrag();
@@ -303,6 +358,21 @@
       });
     });
 
+    // Warm the HTTP cache for other stacks after first paint.
+    window.setTimeout(function () {
+      buttons.forEach(function (btn) {
+        var src = btn.getAttribute("data-stack");
+        if (!src) return;
+        try {
+          var link = document.createElement("link");
+          link.rel = "prefetch";
+          link.as = "video";
+          link.href = src;
+          document.head.appendChild(link);
+        } catch (e) {}
+      });
+    }, 1500);
+
     window.addEventListener("resize", function () {
       if (ready) drawFrame();
     });
@@ -312,11 +382,11 @@
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
             visible = true;
-            if (activeBtn) playStack(loadToken);
+            if (activeBtn) playActive(loadToken);
           } else {
             visible = false;
             clearKeep();
-            pauseEl(video);
+            pauseEl(active);
             stopLoop();
           }
         });
@@ -327,11 +397,11 @@
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) {
         clearKeep();
-        pauseEl(video);
+        pauseEl(active);
         stopLoop();
       } else if (activeBtn) {
         visible = true;
-        playStack(loadToken);
+        playActive(loadToken);
       }
     });
 
