@@ -1,5 +1,7 @@
 (function () {
   var GAP = 0.04;
+  var DEMO_CACHE = "deepphd-demo-stacks-v1";
+  var DEMO_READY_KEY = "deepphdDemoReady";
 
   function mute(el) {
     if (!el) return;
@@ -24,14 +26,41 @@
     } catch (e) {}
   }
 
-
-
-
   function unloadVideo(el) {
     if (!el) return;
     pauseEl(el);
     try { el.removeAttribute("src"); } catch (e) {}
     try { el.load(); } catch (e) {}
+  }
+
+  function markDemoReady() {
+    try { sessionStorage.setItem(DEMO_READY_KEY, "1"); } catch (e) {}
+  }
+
+  function openDemoCache() {
+    if (!("caches" in window)) return Promise.resolve(null);
+    return caches.open(DEMO_CACHE).catch(function () { return null; });
+  }
+
+  function readCachedBlob(src) {
+    return openDemoCache().then(function (cache) {
+      if (!cache) return null;
+      return cache.match(src).then(function (res) {
+        if (!res) return null;
+        return res.blob().then(function (blob) {
+          return blob && blob.size > 1024 ? blob : null;
+        });
+      });
+    }).catch(function () { return null; });
+  }
+
+  function writeCachedBlob(src, blob) {
+    if (!blob || blob.size < 1024) return Promise.resolve();
+    return openDemoCache().then(function (cache) {
+      if (!cache) return;
+      var headers = { "Content-Type": blob.type || "video/mp4" };
+      return cache.put(src, new Response(blob.slice ? blob.slice(0) : blob, { headers: headers }));
+    }).catch(function () {});
   }
 
   function initCompare(root) {
@@ -53,6 +82,9 @@
     var loadingEl = slider.querySelector("[data-compare-loading]");
     var loadingFill = slider.querySelector("[data-compare-loading-fill]");
     var loadingText = slider.querySelector("[data-compare-loading-text]");
+    var pageGate = document.querySelector("[data-page-gate]");
+    var pageGateFill = document.querySelector("[data-page-gate-fill]");
+    var pageGateText = document.querySelector("[data-page-gate-text]");
     if (!canvas || !buttons.length) return;
 
     // One decoded <video> per stack, kept in memory after blob prefetch.
@@ -75,6 +107,12 @@
     var uiProgress = 0;
     var targetProgress = 0;
     var progressRaf = 0;
+    var pageBooting = !!document.documentElement.classList.contains("demo-booting");
+    var allSrcs = [];
+    buttons.forEach(function (btn) {
+      var src = btn.getAttribute("data-stack");
+      if (src && allSrcs.indexOf(src) < 0) allSrcs.push(src);
+    });
 
     function placeLabel(el, a, b) {
       if (!el) return;
@@ -194,6 +232,37 @@
       if (expectedSrc === src && slider.classList.contains("is-loading")) {
         setTargetProgress(p);
       }
+      updatePageGate();
+    }
+
+    function overallProgress() {
+      if (!allSrcs.length) return 1;
+      var sum = 0;
+      allSrcs.forEach(function (src) {
+        var entry = pool[src];
+        sum += entry ? Math.max(0, Math.min(1, entry.progress || 0)) : 0;
+      });
+      return sum / allSrcs.length;
+    }
+
+    function updatePageGate() {
+      if (!pageBooting) return;
+      var pct = overallProgress();
+      if (pageGateFill) pageGateFill.style.width = (pct * 100).toFixed(1) + "%";
+      if (pageGateText) pageGateText.textContent = "Loading demo " + Math.round(pct * 100) + "%";
+    }
+
+    function revealPage() {
+      if (!pageBooting && !document.documentElement.classList.contains("demo-booting")) {
+        markDemoReady();
+        return;
+      }
+      pageBooting = false;
+      if (pageGateFill) pageGateFill.style.width = "100%";
+      if (pageGateText) pageGateText.textContent = "Loading demo 100%";
+      if (pageGate) pageGate.setAttribute("aria-busy", "false");
+      markDemoReady();
+      document.documentElement.classList.remove("demo-booting");
     }
 
     function resizeCanvas() {
@@ -414,8 +483,22 @@
       return waitVideoReady(video, src).then(function () {
         entry.ready = video.readyState >= 2;
         entry.progress = 1;
+        reportProgress(src, 1);
         return entry;
       });
+    }
+
+    function fetchNetworkBlob(src, entry) {
+      return fetch(src, { credentials: "same-origin", cache: "force-cache" })
+        .then(function (res) {
+          if (!res.ok) throw new Error("fetch failed");
+          reportProgress(src, Math.max(entry.progress || 0, 0.04));
+          return readBodyWithProgress(res, src);
+        })
+        .then(function (blob) {
+          writeCachedBlob(src, blob);
+          return blob;
+        });
     }
 
     function loadEntry(src) {
@@ -426,14 +509,15 @@
       }
       if (entry.promise) return entry.promise;
 
-      entry.promise = fetch(src, { credentials: "same-origin", cache: "force-cache" })
-        .then(function (res) {
-          if (!res.ok) throw new Error("fetch failed");
-          reportProgress(src, Math.max(entry.progress || 0, 0.04));
-          return readBodyWithProgress(res, src);
-        })
-        .then(function (blob) {
-          return attachBlob(entry, blob, src);
+      entry.promise = readCachedBlob(src)
+        .then(function (cached) {
+          if (cached) {
+            reportProgress(src, 0.88);
+            return attachBlob(entry, cached, src);
+          }
+          return fetchNetworkBlob(src, entry).then(function (blob) {
+            return attachBlob(entry, blob, src);
+          });
         })
         .catch(function () {
           var video = entry.video;
@@ -455,35 +539,41 @@
     }
 
     function warmAll(preferSrc) {
-      var srcs = [];
-      buttons.forEach(function (btn) {
-        var src = btn.getAttribute("data-stack");
-        if (src && srcs.indexOf(src) < 0) srcs.push(src);
-      });
+      var srcs = allSrcs.slice();
       if (preferSrc) {
         srcs = [preferSrc].concat(srcs.filter(function (s) { return s !== preferSrc; }));
       }
 
       var i = 0;
       var inflight = 0;
-      var max = 2;
+      var max = 3;
+      var pending = srcs.length;
+      if (!pending) return Promise.resolve();
 
-      function pump() {
-        while (inflight < max && i < srcs.length) {
-          (function (src) {
-            inflight += 1;
-            loadEntry(src).then(function () {
-              inflight -= 1;
-              pump();
-            }, function () {
-              inflight -= 1;
-              pump();
-            });
-          })(srcs[i++]);
+      return new Promise(function (resolve) {
+        var settled = false;
+        function doneOne() {
+          pending -= 1;
+          inflight -= 1;
+          updatePageGate();
+          if (pending <= 0 && !settled) {
+            settled = true;
+            resolve();
+            return;
+          }
+          pump();
         }
-      }
-
-      pump();
+        function pump() {
+          while (inflight < max && i < srcs.length) {
+            (function (src) {
+              inflight += 1;
+              loadEntry(src).then(doneOne, doneOne);
+            })(srcs[i++]);
+          }
+        }
+        updatePageGate();
+        pump();
+      });
     }
 
     function activate(btn) {
@@ -520,8 +610,8 @@
 
       var cached = pool[stackSrc];
       var alreadyReady = cached && cached.ready && cached.video && cached.video.readyState >= 2;
-      if (!alreadyReady) {
-        // Hold the previous frame behind a loading veil until the next stack is ready.
+      // During full-page boot the gate covers everything; skip the in-widget veil.
+      if (!alreadyReady && !pageBooting) {
         if (active && active !== (cached && cached.video)) pauseEl(active);
         showLoading((cached && cached.progress) || 0.02);
       }
@@ -544,13 +634,13 @@
           hideLoading();
           drawFrame();
           playActive(token);
-          showHint();
+          if (!pageBooting) showHint();
         }
 
         if (entry.video.readyState >= 2) {
           commit();
         } else {
-          showLoading(Math.max(0.92, entry.progress || 0.92));
+          if (!pageBooting) showLoading(Math.max(0.92, entry.progress || 0.92));
           entry.video.addEventListener("loadeddata", commit, { once: true });
           entry.video.addEventListener("canplay", commit, { once: true });
         }
@@ -599,9 +689,29 @@
 
     var start = root.querySelector("[data-scene].is-active") || buttons[0];
     var preferSrc = start ? start.getAttribute("data-stack") || "" : "";
-    // Prefetch every stack into memory (blob) as soon as the page opens.
-    warmAll(preferSrc);
-    if (start) activate(start);
+    updatePageGate();
+
+    // First visit: hold the page until every stack is cached. Revisit: no gate;
+    // restore blobs from Cache Storage so playback can start immediately.
+    if (pageBooting) {
+      var bootWatchdog = window.setTimeout(function () {
+        revealPage();
+        if (start) activate(start);
+        showHint();
+      }, 90000);
+
+      warmAll(preferSrc).then(function () {
+        window.clearTimeout(bootWatchdog);
+        if (start) activate(start);
+        revealPage();
+        window.setTimeout(showHint, 120);
+      });
+    } else {
+      if (start) activate(start);
+      warmAll(preferSrc).then(function () {
+        markDemoReady();
+      });
+    }
   }
 
   function initGalleryPlayers() {
@@ -745,6 +855,13 @@
   var demo = document.querySelector("[data-demo]");
   if (demo) initCompare(demo);
   initGalleryPlayers();
+
+  // Back-forward cache: keep the restored Home page visible without re-gating.
+  window.addEventListener("pageshow", function (e) {
+    if (e.persisted) {
+      document.documentElement.classList.remove("demo-booting");
+    }
+  });
 
   function initSectionTabs(root) {
     var buttons = Array.prototype.slice.call(root.querySelectorAll("[data-tab]"));

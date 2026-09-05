@@ -4,6 +4,16 @@
   {% include head.html %}
 
   <body>
+    {% if page.title == "Home" %}
+    <div class="page-gate" data-page-gate aria-live="polite" aria-busy="true">
+      <div class="page-gate-inner">
+        <div class="page-gate-track" aria-hidden="true">
+          <div class="page-gate-fill" data-page-gate-fill></div>
+        </div>
+        <p class="page-gate-text" data-page-gate-text>Loading demo 0%</p>
+      </div>
+    </div>
+    {% endif %}
     <nav class="nav-main">
       <ul>
         <li class="hvr-underline-reveal"><a href="{{ site.baseurl }}/About/">About</a></li>
