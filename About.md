@@ -52,8 +52,6 @@ Here we present DeepPhD, a self-supervised framework that incorporates explicit 
 
 The entire framework is trained in a self-supervised manner through parameter sharing and joint optimization.
 
-Extensive qualitative and quantitative evaluations demonstrate that DeepPhD can achieve reliable denoising and facilitate accurate biological analysis from severely corrupted images.
-
 <div class="about-cta">
 {% include arrow-link.html href="/#results" text="View Results" %}
 </div>
