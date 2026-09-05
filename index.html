@@ -76,6 +76,12 @@ title: Home
         <img class="compare-poster" data-compare-poster alt=""
           src="{{ site.baseurl }}/videos/demo/hela/poster.png">
         <canvas class="compare-canvas" data-compare-canvas></canvas>
+        <div class="compare-loading" data-compare-loading hidden>
+          <div class="compare-loading-track" aria-hidden="true">
+            <div class="compare-loading-fill" data-compare-loading-fill></div>
+          </div>
+          <span class="compare-loading-text" data-compare-loading-text>Loading 0%</span>
+        </div>
         <video class="compare-stack" data-stack-video muted loop playsinline preload="auto"></video>
         <video class="compare-stack" data-stack-video muted loop playsinline preload="auto"></video>
         <div class="compare-bar" data-bar="left">
@@ -138,7 +144,7 @@ title: Home
     <p>The physical modeling module learns to estimate noise parameters, including the system gain α, the Gaussian noise variance β, and the FPN pattern. For image restoration, we designed a two-stage scheme composed of noise decoupling and signal estimation.</p>
   </details>
 
-  {% include arrow-link.html href="/About/#pipeline" text="View detailed pipeline" %}
+  {% include arrow-link.html href="/About/#principle" text="View detailed pipeline" %}
 </section>
 
 <section class="home-section" id="results">

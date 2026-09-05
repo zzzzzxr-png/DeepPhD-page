@@ -50,6 +50,9 @@
     var linkText = root.querySelector("[data-demo-link-text]");
     var buttons = root.querySelectorAll("[data-scene]");
     var hint = slider.querySelector("[data-compare-hint]");
+    var loadingEl = slider.querySelector("[data-compare-loading]");
+    var loadingFill = slider.querySelector("[data-compare-loading-fill]");
+    var loadingText = slider.querySelector("[data-compare-loading-text]");
     if (!canvas || !buttons.length) return;
 
     // One decoded <video> per stack, kept in memory after blob prefetch.
@@ -69,6 +72,9 @@
     var expectedSrc = "";
     var drawing = false;
     var ready = false;
+    var uiProgress = 0;
+    var targetProgress = 0;
+    var progressRaf = 0;
 
     function placeLabel(el, a, b) {
       if (!el) return;
@@ -124,6 +130,69 @@
       if (keepTimer) {
         window.clearInterval(keepTimer);
         keepTimer = null;
+      }
+    }
+
+    function paintLoadingBar() {
+      var pct = Math.max(0, Math.min(1, uiProgress));
+      if (loadingFill) loadingFill.style.width = (pct * 100).toFixed(1) + "%";
+      if (loadingText) loadingText.textContent = "Loading " + Math.round(pct * 100) + "%";
+    }
+
+    function tickProgress() {
+      progressRaf = 0;
+      if (!slider.classList.contains("is-loading")) return;
+      var gap = targetProgress - uiProgress;
+      if (Math.abs(gap) < 0.002) {
+        uiProgress = targetProgress;
+      } else {
+        uiProgress += gap * 0.18;
+        progressRaf = window.requestAnimationFrame(tickProgress);
+      }
+      paintLoadingBar();
+      // Soft creep while decoding so the bar never looks frozen near the end.
+      if (targetProgress >= 0.9 && targetProgress < 1 && uiProgress < 0.97) {
+        targetProgress = Math.min(0.97, targetProgress + 0.0025);
+        if (!progressRaf) progressRaf = window.requestAnimationFrame(tickProgress);
+      }
+    }
+
+    function setTargetProgress(p) {
+      targetProgress = Math.max(targetProgress, Math.min(1, p));
+      if (!progressRaf) progressRaf = window.requestAnimationFrame(tickProgress);
+    }
+
+    function showLoading(initial) {
+      hideHint();
+      ready = false;
+      slider.classList.remove("is-playing");
+      slider.classList.add("is-loading");
+      if (loadingEl) loadingEl.hidden = false;
+      uiProgress = Math.max(0.02, initial || 0.02);
+      targetProgress = uiProgress;
+      paintLoadingBar();
+      if (!progressRaf) progressRaf = window.requestAnimationFrame(tickProgress);
+    }
+
+    function hideLoading() {
+      targetProgress = 1;
+      uiProgress = 1;
+      paintLoadingBar();
+      slider.classList.remove("is-loading");
+      if (loadingEl) loadingEl.hidden = true;
+      uiProgress = 0;
+      targetProgress = 0;
+      if (progressRaf) {
+        window.cancelAnimationFrame(progressRaf);
+        progressRaf = 0;
+      }
+    }
+
+    function reportProgress(src, p) {
+      var entry = pool[src];
+      if (entry) entry.progress = Math.max(entry.progress || 0, p);
+      if (expectedSrc === src && slider.classList.contains("is-loading")) {
+        setTargetProgress(p);
       }
     }
 
@@ -226,6 +295,7 @@
       }
 
       slider.addEventListener("pointerdown", function (e) {
+        if (slider.classList.contains("is-loading") || !ready) return;
         hideHint();
         visible = true;
         playActive(loadToken);
@@ -264,38 +334,94 @@
         video: video,
         blobUrl: null,
         promise: null,
-        ready: false
+        ready: false,
+        progress: 0
       };
       pool[src] = entry;
       return entry;
     }
 
-    function waitVideoReady(video) {
+    function waitVideoReady(video, src) {
       return new Promise(function (resolve) {
         if (video.readyState >= 3) {
+          reportProgress(src, 1);
           resolve();
           return;
         }
         var done = false;
+        var poll = window.setInterval(function () {
+          if (video.readyState >= 2) reportProgress(src, 0.94);
+          if (video.readyState >= 3) reportProgress(src, 0.98);
+        }, 200);
         function finish() {
           if (done) return;
           done = true;
+          window.clearInterval(poll);
           video.removeEventListener("canplaythrough", finish);
           video.removeEventListener("loadeddata", finish);
           video.removeEventListener("error", finish);
+          reportProgress(src, 1);
           resolve();
         }
         video.addEventListener("canplaythrough", finish);
         video.addEventListener("loadeddata", finish);
         video.addEventListener("error", finish);
-        // Fallback if events already fired / stalled.
-        window.setTimeout(finish, 12000);
+        window.setTimeout(finish, 20000);
+      });
+    }
+
+    function readBodyWithProgress(res, src) {
+      var total = Number(res.headers.get("Content-Length")) || 0;
+      if (!res.body || !res.body.getReader) {
+        return res.blob().then(function (blob) {
+          reportProgress(src, 0.9);
+          return blob;
+        });
+      }
+      var reader = res.body.getReader();
+      var chunks = [];
+      var received = 0;
+      function pump() {
+        return reader.read().then(function (result) {
+          if (result.done) {
+            reportProgress(src, 0.9);
+            return new Blob(chunks);
+          }
+          chunks.push(result.value);
+          received += result.value.byteLength || result.value.length || 0;
+          if (total > 0) {
+            reportProgress(src, Math.min(0.9, (received / total) * 0.9));
+          } else {
+            reportProgress(src, Math.min(0.85, 0.08 + (1 - Math.exp(-received / 8e6)) * 0.77));
+          }
+          return pump();
+        });
+      }
+      return pump();
+    }
+
+    function attachBlob(entry, blob, src) {
+      if (entry.blobUrl) {
+        try { URL.revokeObjectURL(entry.blobUrl); } catch (e) {}
+      }
+      entry.blobUrl = URL.createObjectURL(blob);
+      var video = entry.video;
+      mute(video);
+      video.setAttribute("data-stack-src", src);
+      video.src = entry.blobUrl;
+      try { video.load(); } catch (e) {}
+      reportProgress(src, 0.92);
+      return waitVideoReady(video, src).then(function () {
+        entry.ready = video.readyState >= 2;
+        entry.progress = 1;
+        return entry;
       });
     }
 
     function loadEntry(src) {
       var entry = getEntry(src);
       if (entry.ready && entry.video.readyState >= 2) {
+        entry.progress = 1;
         return Promise.resolve(entry);
       }
       if (entry.promise) return entry.promise;
@@ -303,25 +429,13 @@
       entry.promise = fetch(src, { credentials: "same-origin", cache: "force-cache" })
         .then(function (res) {
           if (!res.ok) throw new Error("fetch failed");
-          return res.blob();
+          reportProgress(src, Math.max(entry.progress || 0, 0.04));
+          return readBodyWithProgress(res, src);
         })
         .then(function (blob) {
-          if (entry.blobUrl) {
-            try { URL.revokeObjectURL(entry.blobUrl); } catch (e) {}
-          }
-          entry.blobUrl = URL.createObjectURL(blob);
-          var video = entry.video;
-          mute(video);
-          video.setAttribute("data-stack-src", src);
-          video.src = entry.blobUrl;
-          try { video.load(); } catch (e) {}
-          return waitVideoReady(video).then(function () {
-            entry.ready = video.readyState >= 2;
-            return entry;
-          });
+          return attachBlob(entry, blob, src);
         })
         .catch(function () {
-          // Network / CORS fallback: let the browser stream from the URL.
           var video = entry.video;
           mute(video);
           video.setAttribute("data-stack-src", src);
@@ -329,8 +443,10 @@
             video.src = src;
             try { video.load(); } catch (e) {}
           }
-          return waitVideoReady(video).then(function () {
+          reportProgress(src, Math.max(entry.progress || 0, 0.2));
+          return waitVideoReady(video, src).then(function () {
             entry.ready = video.readyState >= 2;
+            entry.progress = 1;
             return entry;
           });
         });
@@ -399,14 +515,16 @@
         if (posterSrc) poster.setAttribute("src", posterSrc);
       }
 
-      // Keep showing poster until the target entry is ready — no unload of others.
-      if (!(active && (active.getAttribute("data-stack-src") || "") === stackSrc && active.readyState >= 2)) {
-        ready = false;
-        slider.classList.remove("is-playing");
-      }
-      applyCuts();
-      showHint();
       expectedSrc = stackSrc;
+      applyCuts();
+
+      var cached = pool[stackSrc];
+      var alreadyReady = cached && cached.ready && cached.video && cached.video.readyState >= 2;
+      if (!alreadyReady) {
+        // Hold the previous frame behind a loading veil until the next stack is ready.
+        if (active && active !== (cached && cached.video)) pauseEl(active);
+        showLoading((cached && cached.progress) || 0.02);
+      }
 
       loadEntry(stackSrc).then(function (entry) {
         if (token !== loadToken) return;
@@ -423,13 +541,16 @@
           if (active !== entry.video) return;
           if (entry.video.readyState < 2) return;
           ready = true;
+          hideLoading();
           drawFrame();
           playActive(token);
+          showHint();
         }
 
         if (entry.video.readyState >= 2) {
           commit();
         } else {
+          showLoading(Math.max(0.92, entry.progress || 0.92));
           entry.video.addEventListener("loadeddata", commit, { once: true });
           entry.video.addEventListener("canplay", commit, { once: true });
         }
